@@ -27,6 +27,7 @@
 #include <XnStreamFormats.h>
 #include <XnStatus.h>
 #include <XnDDK.h>
+#include <fstream>
 
 //---------------------------------------------------------------------------
 // Types
@@ -51,6 +52,8 @@ typedef struct XnShiftToDepthConfig
 
 	OniDepthPixel nDepthMinCutOff;
 	OniDepthPixel nDepthMaxCutOff;
+	
+	XnUInt64 nCustomS2DTableID;
 
 } XnShiftToDepthConfig;
 

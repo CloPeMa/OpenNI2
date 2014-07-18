@@ -82,7 +82,7 @@ public:
 	/**
 	* Reads values for all properties in module from an INI file.
 	*/
-	XnStatus LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* strSectionName = NULL);
+	XnStatus LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* strSectionName = NULL, const char* deviceID = NULL);
 
 	virtual XnStatus BatchConfig(const XnActualPropertiesHash& props);
 	virtual XnStatus UnsafeBatchConfig(const XnActualPropertiesHash& props);

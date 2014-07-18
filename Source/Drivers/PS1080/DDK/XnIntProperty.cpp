@@ -38,6 +38,8 @@ XnStatus XnIntProperty::ReadValueFromFile(const XnChar* csINIFile, const XnChar*
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 
+	xnLogVerbose("S2D", "reading value from file %s", csINIFile);
+	
 	XnInt32 nValue;
 
 	nRetVal = xnOSReadIntFromINI(csINIFile, csSection, GetName(), &nValue);

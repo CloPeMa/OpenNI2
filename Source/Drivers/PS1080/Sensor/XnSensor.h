@@ -78,7 +78,7 @@ public:
 	 * Resolves the config file's path.
 	 * Specify NULL to strConfigDir to resolve it based on the driver's directory.
 	 */
-	static XnStatus ResolveGlobalConfigFileName(XnChar* strConfigFile, XnUInt32 nBufSize, const XnChar* strConfigDir);
+	XnStatus ResolveGlobalConfigFileName(XnChar* strConfigFile, XnUInt32 nBufSize, const XnChar* strConfigDir);
 
 	XnStatus SetGlobalConfigFile(const XnChar* strConfigFile);
 	XnStatus ConfigureModuleFromGlobalFile(const XnChar* strModule, const XnChar* strSection = NULL);

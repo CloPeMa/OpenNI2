@@ -187,7 +187,8 @@ enum
 	XN_STREAM_PROPERTY_WAVELENGTH_CORRECTION = 0x1080FF46, // "WavelengthCorrection"
 	/** Boolean */
 	XN_STREAM_PROPERTY_WAVELENGTH_CORRECTION_DEBUG = 0x1080FF47, // "WavelengthCorrectionDebug"
-
+	/** unsigned long long */
+	XN_STREAM_PROPERTY_CUSTOM_S2D_TABLE_ID = 0x1080FF48, // "CustomS2DTableID"
 	/*******************************************************************/
 	/* Color stream properties                                         */
 	/*******************************************************************/

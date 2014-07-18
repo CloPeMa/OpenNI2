@@ -94,7 +94,7 @@ public:
 	virtual XnStatus GetProperty(const XnChar* ModuleName, XnUInt32 propertyId, XnDouble* pdValue);
 	virtual XnStatus GetProperty(const XnChar* ModuleName, XnUInt32 propertyId, XnChar* csValue);
 	virtual XnStatus GetProperty(const XnChar* ModuleName, XnUInt32 propertyId, const OniGeneralBuffer& pValue);
-	virtual XnStatus LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* csSectionName);
+	virtual XnStatus LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* csSectionName, const char* deviceID = NULL);
 	virtual XnStatus BatchConfig(const XnPropertySet* pChangeSet);
 	virtual XnStatus GetAllProperties(XnPropertySet* pSet, XnBool bNoStreams = FALSE, const XnChar* strModule = NULL);
 	virtual XnStatus RegisterToPropertyChange(const XnChar* Module, XnUInt32 propertyId, XnDeviceOnPropertyChangedEventHandler Handler, void* pCookie, XnCallbackHandle& hCallback);

@@ -26,6 +26,8 @@
 #include <XnOS.h>
 #include <XnCallback.h>
 #include <XnLog.h>
+#include "XnDepthStream.h"
+#include "XnActualIntProperty.h"
 
 //---------------------------------------------------------------------------
 // Code
@@ -87,9 +89,12 @@ XnStatus XnProperty::SetValue(const void* pValue)
 		{
 			if (m_LogSeverity != -1)
 			{
+				xnLogVerbose(XN_MASK_DDK, "Max shift: %d", ((XnDepthStream*)m_pSetCallbackCookie)->SetMaxDepth(1234));
+				xnLogVerbose(XN_MASK_DDK, "Max shift: %d", ((XnDepthStream*)m_pSetCallbackCookie)->SetCustomS2DTableID(4321));
 				xnLogWrite(XN_MASK_DDK, (XnLogSeverity)m_LogSeverity, __FILE__, __LINE__, "Failed setting %s.%s: %s", GetModule(), GetName(), xnGetStatusString(nRetVal));
 			}
-			return (nRetVal);
+// 			return (nRetVal);
+			return (XN_STATUS_OK);
 		}
 		else
 		{

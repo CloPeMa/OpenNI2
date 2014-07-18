@@ -22,7 +22,7 @@
 #define _ONI_SAMPLE_UTILITIES_H_
 
 #include <stdio.h>
-#include <OpenNI.h>
+#include "../../Include/OpenNI.h"
 
 #ifdef WIN32
 #include <conio.h>

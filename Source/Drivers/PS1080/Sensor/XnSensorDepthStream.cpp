@@ -113,7 +113,8 @@ XnStatus XnSensorDepthStream::Init()
 	XN_VALIDATE_ADD_PROPERTIES(this, &m_InputFormat, &m_DepthRegistration, &m_HoleFilter, 
 		&m_WhiteBalance, &m_Gain, &m_AGCBin, &m_ActualRead, &m_GMCMode, 
 		&m_CloseRange, &m_CroppingMode, &m_RegistrationType, &m_PixelRegistration,
-		&m_HorizontalFOV, &m_VerticalFOV, &m_GMCDebug, &m_WavelengthCorrection, &m_WavelengthCorrectionDebug);
+		&m_HorizontalFOV, &m_VerticalFOV, &m_GMCDebug, &m_WavelengthCorrection, &m_WavelengthCorrectionDebug,
+	);
 
 	// register supported modes
 	XnCmosPreset* pSupportedModes = m_Helper.GetPrivateData()->FWInfo.depthModes.GetData();

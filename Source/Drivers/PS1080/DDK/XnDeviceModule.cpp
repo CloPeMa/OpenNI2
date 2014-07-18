@@ -588,7 +588,7 @@ XnStatus XnDeviceModule::GetAllProperties(XnPropertySet* pSet) const
 	return (XN_STATUS_OK);
 }
 
-XnStatus XnDeviceModule::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* strSectionName /* = NULL */)
+XnStatus XnDeviceModule::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* strSectionName /* = NULL */, const char* deviceID /* =NULL */)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 
@@ -602,6 +602,7 @@ XnStatus XnDeviceModule::LoadConfigFromFile(const XnChar* csINIFilePath, const X
 	for (XnPropertiesHash::Iterator it = m_Properties.Begin(); it != m_Properties.End(); ++it)
 	{
 		XnProperty* pProp = it->Value();
+		xnLogInfo(XN_MASK_DDK, "Property %s loaded.", pProp->GetName());
 
 		// only read writable properties
 		if (!pProp->IsReadOnly())
@@ -610,9 +611,9 @@ XnStatus XnDeviceModule::LoadConfigFromFile(const XnChar* csINIFilePath, const X
 			XN_IS_STATUS_OK(nRetVal);
 		}
 	}
-
+	xnLogInfo(XN_MASK_DDK, "Device ID: %s", deviceID);
 	xnLogInfo(XN_MASK_DDK, "Module '%s' configuration was loaded from file.", GetName());
-
+	
 	return (XN_STATUS_OK);
 }
 

@@ -57,6 +57,11 @@ XnStatus XnShiftToDepthStreamHelper::Init(XnDeviceModule* pModule)
 		m_bPropertiesAdded = TRUE;
 
 		// now create tables and register to properties
+		XnIntProperty* pDeviceIDProperty;
+		XnUInt64* pDeviceID = 0;
+		pModule->GetProperty(XN_MODULE_PROPERTY_SERIAL_NUMBER, &pDeviceIDProperty);
+		pDeviceIDProperty->GetValue(pDeviceID);
+		xnLogVerbose("S2D", "S2D table init for sensor ID %d.", pDeviceID);
 		nRetVal = InitShiftToDepth();
 		XN_IS_STATUS_OK(nRetVal);
 	}
@@ -79,6 +84,7 @@ XnStatus XnShiftToDepthStreamHelper::InitShiftToDepth()
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 
+	xnLogVerbose("S2D", "test1");
 	// register to any shift-to-depth property (so tables can be updated if needed)
 	XnUInt32 propIds[] = 
 	{
@@ -92,22 +98,35 @@ XnStatus XnShiftToDepthStreamHelper::InitShiftToDepth()
 		XN_STREAM_PROPERTY_ZERO_PLANE_DISTANCE,
 		XN_STREAM_PROPERTY_EMITTER_DCMOS_DISTANCE,
 		XN_STREAM_PROPERTY_OUTPUT_FORMAT,
+		XN_STREAM_PROPERTY_CUSTOM_S2D_TABLE_ID
 	};
 
+	xnLogVerbose("S2D", "test2");
+	
+	
 	XnUInt32 nPropCount = sizeof(propIds) / sizeof(propIds[0]);
 
+	xnLogVerbose("S2D", "test3");
+	
 	XnCallbackHandle hDummy;
 
 	XnProperty* pProperty = NULL;
 	for (XnUInt32 i = 0; i < nPropCount; ++i)
 	{
+	  xnLogVerbose("S2D", "test4");
 		nRetVal = m_pModule->GetProperty(propIds[i], &pProperty);
+		xnLogVerbose("S2D", "test5 %s", xnGetStatusString(nRetVal));
 		XN_IS_STATUS_OK(nRetVal);
-
+		
+	  
 		nRetVal = pProperty->OnChangeEvent().Register(ShiftToDepthPropertyValueChangedCallback, this, hDummy);
 		XN_IS_STATUS_OK(nRetVal);
+		xnLogVerbose("S2D", "test6");
 	}
 
+// 	XnUInt64 CustomTableID = ((XnActualIntProperty*)pProperty)->GetValue();
+//    	xnLogVerbose("S2D", "S2D custom table ID: %d", CustomTableID);
+	
 	// register for tables size properties
 	nRetVal = m_pModule->GetProperty(XN_STREAM_PROPERTY_MAX_SHIFT, &pProperty);
 	XN_IS_STATUS_OK(nRetVal);
@@ -126,7 +145,7 @@ XnStatus XnShiftToDepthStreamHelper::InitShiftToDepth()
 
 	nRetVal = pProperty->OnChangeEvent().Register(DeviceS2DTablesSizeChangedCallback, this, hDummy);
 	XN_IS_STATUS_OK(nRetVal);
-
+	
 	// now init the tables
 	XnShiftToDepthConfig Config;
 	nRetVal = GetShiftToDepthConfig(Config);
@@ -219,6 +238,11 @@ XnStatus XnShiftToDepthStreamHelper::GetShiftToDepthConfig(XnShiftToDepthConfig&
 	XN_IS_STATUS_OK(nRetVal);
 
 	Config.nDepthMaxCutOff = (OniDepthPixel)nTemp;
+	
+	nRetVal = m_pModule->GetProperty(XN_STREAM_PROPERTY_CUSTOM_S2D_TABLE_ID, &nTemp);
+	XN_IS_STATUS_OK(nRetVal);
+
+	Config.nCustomS2DTableID = (XnUInt64)nTemp;
 
 	return (XN_STATUS_OK);
 }

@@ -567,13 +567,13 @@ XnStatus XnDeviceBase::GetProperty(const XnChar* ModuleName, XnUInt32 propertyId
 	return XN_STATUS_OK;
 }
 
-XnStatus XnDeviceBase::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* csSectionName)
+XnStatus XnDeviceBase::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar* csSectionName, const char* deviceID)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 	
-	nRetVal = DeviceModule()->LoadConfigFromFile(csINIFilePath, csSectionName);
+	nRetVal = DeviceModule()->LoadConfigFromFile(csINIFilePath, csSectionName, deviceID);
 	XN_IS_STATUS_OK(nRetVal);
-
+	
 	return (XN_STATUS_OK);
 }
 

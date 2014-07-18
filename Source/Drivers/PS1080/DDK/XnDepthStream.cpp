@@ -46,10 +46,12 @@ XnDepthStream::XnDepthStream(const XnChar* csName, XnBool bAllowCustomResolution
 	m_ZeroPlaneDistance(XN_STREAM_PROPERTY_ZERO_PLANE_DISTANCE, "ZPD"),
 	m_ZeroPlanePixelSize(XN_STREAM_PROPERTY_ZERO_PLANE_PIXEL_SIZE, "ZPPS"),
 	m_EmitterDCmosDistance(XN_STREAM_PROPERTY_EMITTER_DCMOS_DISTANCE, "LDDIS"),
-	m_GetDCmosRCmosDistance(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, "DCRCDIS")
+	m_GetDCmosRCmosDistance(XN_STREAM_PROPERTY_DCMOS_RCMOS_DISTANCE, "DCRCDIS"),
+	m_CustomS2DTableID(XN_STREAM_PROPERTY_CUSTOM_S2D_TABLE_ID, "CustomS2DTableID", 0)
 {
 	m_MinDepth.UpdateSetCallback(SetMinDepthCallback, this);
 	m_MaxDepth.UpdateSetCallback(SetMaxDepthCallback, this);
+	m_CustomS2DTableID.UpdateSetCallback(SetCustomS2DTableIDCallback, this);
 }
 
 XnStatus XnDepthStream::Init()
@@ -60,10 +62,14 @@ XnStatus XnDepthStream::Init()
 	nRetVal = XnPixelStream::Init();
 	XN_IS_STATUS_OK(nRetVal);
 
+	xnLogVerbose("S2D", "Pre-registration");
+	
 	// add properties
 	XN_VALIDATE_ADD_PROPERTIES(this, &m_MinDepth, &m_MaxDepth, &m_ConstShift, &m_PixelSizeFactor,
 		&m_MaxShift, &m_ParamCoefficient, &m_ShiftScale, &m_ZeroPlaneDistance, &m_ZeroPlanePixelSize,
-		&m_EmitterDCmosDistance, &m_GetDCmosRCmosDistance, &m_DeviceMaxDepth);
+		&m_EmitterDCmosDistance, &m_GetDCmosRCmosDistance, &m_DeviceMaxDepth, &m_CustomS2DTableID);
+	
+	xnLogVerbose("S2D", "Post-registration");
 
 	nRetVal = OutputFormatProperty().UnsafeUpdateValue(ONI_PIXEL_FORMAT_DEPTH_1_MM);
 	XN_IS_STATUS_OK(nRetVal);
@@ -98,6 +104,8 @@ XnStatus XnDepthStream::SetMinDepth(OniDepthPixel nMinDepth)
 XnStatus XnDepthStream::SetMaxDepth(OniDepthPixel nMaxDepth)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
+	
+	xnLogVerbose("S2D", "S2D callback in progress (max depth): %s", xnGetStatusString(nRetVal));
 
 	if (nMaxDepth > GetDeviceMaxDepth())
 	{
@@ -107,6 +115,19 @@ XnStatus XnDepthStream::SetMaxDepth(OniDepthPixel nMaxDepth)
 	nRetVal = m_MaxDepth.UnsafeUpdateValue(nMaxDepth);
 	XN_IS_STATUS_OK(nRetVal);
 
+	return (XN_STATUS_OK);
+}
+
+XnStatus XnDepthStream::SetCustomS2DTableID(XnUInt64 id)
+{
+	XnStatus nRetVal = XN_STATUS_OK;
+	xnLogVerbose("S2D", "S2D callback in progress (ID): %s", xnGetStatusString(nRetVal));
+	
+	nRetVal = m_CustomS2DTableID.UnsafeUpdateValue(id);
+	
+	XN_IS_STATUS_OK(nRetVal);
+	
+	
 	return (XN_STATUS_OK);
 }
 
@@ -130,4 +151,13 @@ XnStatus XN_CALLBACK_TYPE XnDepthStream::SetMaxDepthCallback(XnActualIntProperty
 {
 	XnDepthStream* pStream = (XnDepthStream*)pCookie;
 	return pStream->SetMaxDepth((OniDepthPixel)nValue);	
+}
+
+XnStatus XN_CALLBACK_TYPE XnDepthStream::SetCustomS2DTableIDCallback(XnActualIntProperty* /*pSender*/, XnUInt64 nValue, void* pCookie)
+{
+	xnLogVerbose("S2D", "Called S2D callback.");
+ 	XnDepthStream* pStream = (XnDepthStream*)pCookie;
+ 	XnStatus nRetVal = pStream->SetCustomS2DTableID(nValue);	
+//   	XnStatus nRetVal = this->SetCustomS2DTableID((XnUInt64)nValue);	
+	return nRetVal;
 }

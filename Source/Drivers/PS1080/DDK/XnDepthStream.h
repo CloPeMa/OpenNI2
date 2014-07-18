@@ -59,10 +59,12 @@ public:
 	inline XnDouble GetZeroPlanePixelSize() const { return m_ZeroPlanePixelSize.GetValue(); }
 	inline XnDouble GetEmitterDCmosDistance() const { return m_EmitterDCmosDistance.GetValue(); }
 	inline XnDouble GetDCmosRCmosDistance() const { return m_GetDCmosRCmosDistance.GetValue(); }
+	inline XnUInt64 GetCustomS2DTableID() const { return m_CustomS2DTableID.GetValue(); }
 
 	inline OniDepthPixel* GetShiftToDepthTable() const { return m_S2DHelper.GetShiftToDepthTable(); }
 	inline XnUInt16* GetDepthToShiftTable() const { return m_S2DHelper.GetDepthToShiftTable(); }
-
+	XnStatus SetCustomS2DTableID(XnUInt64 id);
+	virtual XnStatus SetMaxDepth(OniDepthPixel nMaxDepth);
 protected:
 	//---------------------------------------------------------------------------
 	// Properties Getters
@@ -79,12 +81,14 @@ protected:
 	inline XnActualRealProperty& ZeroPlanePixelSizeProperty() { return m_ZeroPlanePixelSize; }
 	inline XnActualRealProperty& EmitterDCmosDistanceProperty() { return m_EmitterDCmosDistance; }
 	inline XnActualRealProperty& GetDCmosRCmosDistanceProperty() { return m_GetDCmosRCmosDistance; }
+	inline XnActualIntProperty& CustomS2DTableIDProperty() { return m_CustomS2DTableID; }
 
 	//---------------------------------------------------------------------------
 	// Setters
 	//---------------------------------------------------------------------------
 	virtual XnStatus SetMinDepth(OniDepthPixel nMinDepth);
-	virtual XnStatus SetMaxDepth(OniDepthPixel nMaxDepth);
+	
+	
 
 protected:
 	//---------------------------------------------------------------------------
@@ -96,7 +100,8 @@ private:
 	// callbacks
 	static XnStatus XN_CALLBACK_TYPE SetMinDepthCallback(XnActualIntProperty* pSender, XnUInt64 nValue, void* pCookie);
 	static XnStatus XN_CALLBACK_TYPE SetMaxDepthCallback(XnActualIntProperty* pSender, XnUInt64 nValue, void* pCookie);
-
+	static XnStatus XN_CALLBACK_TYPE SetCustomS2DTableIDCallback(XnActualIntProperty* pSender, XnUInt64 nValue, void* pCookie);
+	
 	//---------------------------------------------------------------------------
 	// Members
 	//---------------------------------------------------------------------------
@@ -112,6 +117,7 @@ private:
 	XnActualRealProperty m_ZeroPlanePixelSize;
 	XnActualRealProperty m_EmitterDCmosDistance;
 	XnActualRealProperty m_GetDCmosRCmosDistance;
+	XnActualIntProperty m_CustomS2DTableID;
 
 	XnShiftToDepthStreamHelper m_S2DHelper;
 };

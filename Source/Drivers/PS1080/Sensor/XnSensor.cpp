@@ -32,6 +32,9 @@
 #include "XnDeviceSensorInit.h"
 #include "XnDeviceEnumeration.h"
 #include <XnPsVersion.h>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 //---------------------------------------------------------------------------
 // Defines
@@ -194,7 +197,9 @@ XnStatus XnSensor::InitImpl(const XnDeviceConfig *pDeviceConfig)
 	XnStatus nRetVal = XN_STATUS_OK;
 	
 	xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Initializing device sensor...");
-
+	xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Device config connection string: %s", pDeviceConfig->cpConnectionString);
+	xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Device serial ID: %s", GetFixedParams()->GetSensorSerial());
+	
 	nRetVal = xnSchedulerStart(&m_pScheduler);
 	XN_IS_STATUS_OK(nRetVal);
 
@@ -242,7 +247,7 @@ XnStatus XnSensor::InitSensor(const XnDeviceConfig* pDeviceConfig)
 {
 	XnStatus nRetVal = XN_STATUS_OK;
 	XnDevicePrivateData* pDevicePrivateData = GetDevicePrivateData();
-
+ 
 	pDevicePrivateData->pSensor = this;
 
 	// open IO
@@ -271,6 +276,8 @@ XnStatus XnSensor::InitSensor(const XnDeviceConfig* pDeviceConfig)
 	nRetVal = m_PlatformString.UnsafeUpdateValue(GetFixedParams()->GetPlatformString());
 	XN_IS_STATUS_OK(nRetVal);
 
+	ResolveGlobalConfigFileName(m_strGlobalConfigFile, sizeof(m_strGlobalConfigFile), NULL);
+	
 	// Add supported streams
 	AddSupportedStream(XN_STREAM_TYPE_DEPTH);
 	AddSupportedStream(XN_STREAM_TYPE_IR);
@@ -285,6 +292,7 @@ XnStatus XnSensor::InitSensor(const XnDeviceConfig* pDeviceConfig)
 		AddSupportedStream(XN_STREAM_TYPE_AUDIO);
 	}
 
+	
 	return XN_STATUS_OK;
 }
 
@@ -390,7 +398,7 @@ XnStatus XnSensor::CreateDeviceModule(XnDeviceModuleHolder** ppModuleHolder)
 	// configure it from global file
 	if (m_strGlobalConfigFile[0] != '\0')
 	{
-		nRetVal = pModule->LoadConfigFromFile(m_strGlobalConfigFile);
+		nRetVal = pModule->LoadConfigFromFile(m_strGlobalConfigFile, NULL);
 		XN_IS_STATUS_OK(nRetVal);
 	}
 	
@@ -583,7 +591,7 @@ XnStatus XnSensor::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar*
 	XN_IS_STATUS_OK(nRetVal);
 
 	// now configure DEVICE module (primary stream, global mirror, etc.)
-	nRetVal = DeviceModule()->LoadConfigFromFile(csINIFilePath, XN_MODULE_NAME_DEVICE);
+	nRetVal = DeviceModule()->LoadConfigFromFile(csINIFilePath, XN_MODULE_NAME_DEVICE, m_ID.GetValue());
 	XN_IS_STATUS_OK(nRetVal);
 
 	// and now configure the streams
@@ -594,7 +602,7 @@ XnStatus XnSensor::LoadConfigFromFile(const XnChar* csINIFilePath, const XnChar*
 	for (XnDeviceModuleHolderList::Iterator it = streams.Begin(); it != streams.End(); ++it)
 	{
 		XnDeviceModuleHolder* pHolder = *it;
-		nRetVal = pHolder->GetModule()->LoadConfigFromFile(csINIFilePath);
+		nRetVal = pHolder->GetModule()->LoadConfigFromFile(csINIFilePath, NULL, m_ID.GetValue());
 		XN_IS_STATUS_OK(nRetVal);
 	}
 
@@ -606,7 +614,7 @@ XnStatus XnSensor::InitReading()
 	XnStatus nRetVal = XN_STATUS_OK;
 
 	XnSensorUsbInterface prevInterface = GetCurrentUsbInterface();
-
+	
 	// open data endpoints
 	nRetVal = m_SensorIO.OpenDataEndPoints((XnSensorUsbInterface)m_Interface.GetValue(), *m_Firmware.GetInfo());
 	XN_IS_STATUS_OK(nRetVal);
@@ -701,9 +709,10 @@ XnStatus XnSensor::ValidateSensorID(XnChar* csSensorID)
 XnStatus XnSensor::ResolveGlobalConfigFileName(XnChar* strConfigFile, XnUInt32 nBufSize, const XnChar* strConfigDir)
 {
 	// If strConfigDir is NULL, tries to resolve the config file based on the driver's directory
-	XnChar strBaseDir[XN_FILE_MAX_PATH];
+	//XnChar strBaseDir[XN_FILE_MAX_PATH];
 	if (strConfigDir == NULL)
 	{
+	  /*
 		if (xnOSGetModulePathForProcAddress(reinterpret_cast<void*>(&XnSensor::ResolveGlobalConfigFileName), strBaseDir) == XN_STATUS_OK &&
 				xnOSGetDirName(strBaseDir, strBaseDir, XN_FILE_MAX_PATH) == XN_STATUS_OK)
 		{
@@ -715,11 +724,36 @@ XnStatus XnSensor::ResolveGlobalConfigFileName(XnChar* strConfigFile, XnUInt32 n
 			// Something wrong happened. Use the current directory as the fallback.
 			strConfigDir = ".";
 		}
+		*/
+	  strConfigDir = ".";
 	}
 
+	strConfigDir = "/etc/openni2";
+	
 	XnStatus rc;
 	XN_VALIDATE_STR_COPY(strConfigFile, strConfigDir, nBufSize, rc);
-	return xnOSAppendFilePath(strConfigFile, XN_GLOBAL_CONFIG_FILE_NAME, nBufSize);
+	
+	xnLogInfo(XN_MASK_DEVICE_SENSOR, "Resolving config file name");
+	
+	std::ostringstream os;
+	os << strConfigDir << "/" << "PS1080-" << m_ID.GetValue() << ".ini";
+	std::string config_file_name = os.str();
+	
+	xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Trying file %s", config_file_name.c_str());
+	if(access( config_file_name.c_str(), F_OK ) != -1){
+	  xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Returning file %s", config_file_name.c_str());
+	  std::copy(config_file_name.begin(), config_file_name.end(), strConfigFile);
+	}else{
+	
+	  os.str("");
+	  os.clear();
+	  os << strConfigDir << "/" << "PS1080.ini";
+	  config_file_name = os.str();
+	
+	  xnLogVerbose(XN_MASK_DEVICE_SENSOR, "Returning file %s", config_file_name.c_str());
+	  std::copy(config_file_name.begin(), config_file_name.end(), strConfigFile);
+	}
+	return XN_STATUS_OK;
 }
 
 XnStatus XnSensor::SetGlobalConfigFile(const XnChar* strConfigFile)
@@ -747,9 +781,9 @@ XnStatus XnSensor::ConfigureModuleFromGlobalFile(const XnChar* strModule, const 
 
 	XnDeviceModule* pModule;
 	nRetVal = FindModule(strModule, &pModule);
-	XN_IS_STATUS_OK(nRetVal);
-
-	nRetVal = pModule->LoadConfigFromFile(m_strGlobalConfigFile, strSection);
+	XN_IS_STATUS_OK(nRetVal); 
+	
+	nRetVal = pModule->LoadConfigFromFile(m_strGlobalConfigFile, strSection, m_ID.GetValue());
 	XN_IS_STATUS_OK(nRetVal);
 
 	return (XN_STATUS_OK);

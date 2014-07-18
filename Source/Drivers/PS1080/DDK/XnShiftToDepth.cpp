@@ -24,6 +24,11 @@
 #include "XnShiftToDepth.h"
 #include <XnOS.h>
 #include "XnDDK.h"
+#include <XnLog.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 //---------------------------------------------------------------------------
 // Code
@@ -40,7 +45,9 @@ XnStatus XnShiftToDepthInit(XnShiftToDepthTables* pShiftToDepth, const XnShiftTo
 	// store allocation sizes
 	pShiftToDepth->nShiftsCount = pConfig->nDeviceMaxShiftValue + 1;
 	pShiftToDepth->nDepthsCount = pConfig->nDeviceMaxDepthValue + 1;
-
+	
+//	OniDepthPixel* pShiftToDepthTable = pShiftToDepth->pShiftToDepthTable;
+	
 	return XnShiftToDepthUpdate(pShiftToDepth, pConfig);
 }
 
@@ -49,6 +56,8 @@ XnStatus XnShiftToDepthUpdate(XnShiftToDepthTables* pShiftToDepth, const XnShift
 	XN_VALIDATE_INPUT_PTR(pShiftToDepth);
 	XN_VALIDATE_INPUT_PTR(pConfig);
 
+	xnLogVerbose("S2D", "S2D table ID to be used: %d", pConfig->nCustomS2DTableID);
+	
 	// check max shift wasn't changed (if so, memory should be re-allocated)
 	if (pConfig->nDeviceMaxShiftValue > pShiftToDepth->nShiftsCount)
 		return XN_STATUS_DEVICE_INVALID_MAX_SHIFT;
@@ -81,30 +90,66 @@ XnStatus XnShiftToDepthUpdate(XnShiftToDepthTables* pShiftToDepth, const XnShift
 
 	XnUInt32 nMaxDepth = XN_MIN(pConfig->nDeviceMaxDepthValue, pConfig->nDepthMaxCutOff);
 
+	std::ostringstream os;
+	os << "/etc/openni2/PS1080-" << pConfig->nCustomS2DTableID << ".csv";
+	std::string S2D_file_name = os.str();
+	
+	xnLogInfo("S2D", "Trying file %s", S2D_file_name.c_str());
+	if(access( S2D_file_name.c_str(), F_OK ) != -1){
+	  xnLogInfo("S2D", "Using S2D file %s", S2D_file_name.c_str());
+	  
+	  std::ifstream infile;
+          infile.open (S2D_file_name.c_str(), std::ifstream::in);
+	  std::string line;
+          while (std::getline(infile, line)){       
+		std::stringstream  lineStream(line);
+		std::string        cell;
+		std::string val;
+		std::getline(lineStream,cell,';');
+		std::getline(lineStream,val,';');
+		nIndex = atoi(cell.c_str());
+		dDepth = atoi(val.c_str());
+		pShiftToDepthTable[nIndex] = dDepth;
+		for (XnUInt16 i = nLastDepth; i < dDepth; i++)
+		{
+			pDepthToShiftTable[i] = nLastIndex;	
+			
+		}
+
+			nLastIndex = (XnUInt16)nIndex;
+			nLastDepth = (XnUInt16)dDepth;
+          }
+	}else{
+	
+	
 	for (nIndex = 1; nIndex < pConfig->nDeviceMaxShiftValue; nIndex++)
 	{
 		nShiftValue = (XnInt16)nIndex;
-
 		dFixedRefX = (XnDouble)(nShiftValue - nConstShift) / (XnDouble)pConfig->nParamCoeff;
 		dFixedRefX -= 0.375;
 		dMetric = dFixedRefX * dPlanePixelSize;
 		dDepth = pConfig->nShiftScale * ((dMetric * dPlaneDsr / (dPlaneDcl - dMetric)) + dPlaneDsr);
-
+		
 		// check cut-offs
 		if ((dDepth > pConfig->nDepthMinCutOff) && (dDepth < nMaxDepth))
 		{
 			pShiftToDepthTable[nIndex] = (XnUInt16)dDepth;
-
+			
 			for (XnUInt16 i = nLastDepth; i < dDepth; i++)
+			{
 				pDepthToShiftTable[i] = nLastIndex;
+				
+			}
 
 			nLastIndex = (XnUInt16)nIndex;
 			nLastDepth = (XnUInt16)dDepth;
 		}
 	}
-
+	}
+	
 	for (XnUInt16 i = nLastDepth; i <= pConfig->nDeviceMaxDepthValue; i++)
 		pDepthToShiftTable[i] = nLastIndex;
+	
 
 	return XN_STATUS_OK;
 }
@@ -120,6 +165,7 @@ XnStatus XnShiftToDepthConvert(XnShiftToDepthTables* pShiftToDepth, XnUInt16* pI
 
 	while (pInput != pInputEnd)
 	{
+		
 		pOutput[0] = pShiftToDepthTable[pInput[0]];
 
 		pInput++;
